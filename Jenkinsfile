@@ -1,6 +1,6 @@
 pipeline {
-    agent any  
-
+    agent any
+    
     environment {
         GEOIP_DB_PATH = "/var/jenkins_home/GeoLite2-Country.mmdb"
     }
@@ -8,14 +8,26 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/mkonefal2/ip-analysis-pipeline.git',
-                    branch: 'main'
+                git url: 'https://github.com/mkonefal2/ip-analysis-pipeline.git', branch: 'main'
             }
         }
 
         stage('Install dependencies') {
             steps {
-                sh 'pip install -r requirements.txt'
+                script {
+                    def requirements = 'requirements.txt'
+                    def installed = sh(script: "pip list", returnStdout: true)
+                    
+                    // Sprawdzenie, czy pakiety są już zainstalowane
+                    if (!installed.contains('requests') || 
+                        !installed.contains('geoip2') || 
+                        !installed.contains('duckdb') || 
+                        !installed.contains('pandas')) {
+                        sh 'pip install -r requirements.txt'
+                    } else {
+                        echo 'Wszystkie zależności są już zainstalowane.'
+                    }
+                }
             }
         }
 
